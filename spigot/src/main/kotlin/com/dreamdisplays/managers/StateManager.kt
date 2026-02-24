@@ -20,7 +20,7 @@ object StateManager {
         val data = getDisplayData(id) ?: return null
         return playStates.computeIfAbsent(id) { StateData(id).also { state ->
             data.duration?.let {
-                state.update(SyncData(id, data.isSync, false, 0L, it))
+                state.update(SyncData(id, data.isSync, false, 0L, it, 1.0f))
             }
         } }
     }
@@ -56,7 +56,7 @@ object StateManager {
         if (!data.isSync) return
 
         val state = getOrCreateState(id)
-        val packet = state?.createPacket() ?: SyncData(id, true, false, 0L, data.duration ?: 0L)
+        val packet = state?.createPacket() ?: SyncData(id, true, false, 0L, data.duration ?: 0L, 1.0f)
 
         PacketUtils.sendSync(mutableListOf(player), packet)
     }
@@ -70,6 +70,18 @@ object StateManager {
         val state = getOrCreateState(id) ?: return
         val packetBefore = state.createPacket()
         state.setPaused(!packetBefore.currentState)
+        val packet = state.createPacket()
+        PacketUtils.sendSync(getReceivers(data).toMutableList(), packet)
+    }
+
+    @JvmStatic
+    fun adjustVolume(id: UUID?, step: Float, actor: Player) {
+        val data = getDisplayData(id) ?: return
+        if (data.ownerId != actor.uniqueId) return
+
+        data.isSync = true
+        val state = getOrCreateState(id) ?: return
+        state.adjustVolume(step)
         val packet = state.createPacket()
         PacketUtils.sendSync(getReceivers(data).toMutableList(), packet)
     }

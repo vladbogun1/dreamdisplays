@@ -21,4 +21,5 @@ data class SyncData(
     val currentState: Boolean,
     val currentTime: Long,
     val limitTime: Long,
+    val volume: Float,
 )

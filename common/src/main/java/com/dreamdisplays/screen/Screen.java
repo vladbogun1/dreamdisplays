@@ -51,6 +51,8 @@ public class Screen {
     private String quality;
     private long savedTimeNanos = 0;
     private int renderDistance = 64;
+    private long controlOverlayUntilNanos = 0L;
+    private String controlOverlayText = "";
     // Use a combined MediaPlayer instead of the separate VideoDecoder and AudioPlayer.
     private @Nullable MediaPlayer mediaPlayer;
     private @Nullable String videoUrl;
@@ -194,11 +196,23 @@ public class Screen {
 //            }
 
             long lostTime = System.nanoTime() - nanos;
-//            long targetTime = packet.currentTime() + lostTime;
-//            long currentTime = getCurrentTimeNanos();
+            long beforeTime = getCurrentTimeNanos();
+            long targetTime = packet.currentTime() + lostTime;
 
-            seekVideoTo(packet.currentTime() + lostTime);
+            seekVideoTo(targetTime);
             setPaused(packet.currentState());
+
+            double oldVolume = getVolume();
+            setVideoVolume(packet.volume());
+
+            long drift = targetTime - beforeTime;
+            if (Math.abs(drift) > 2_000_000_000L) {
+                setControlOverlay(drift > 0 ? "⏩" : "⏪");
+            } else if (Math.abs(packet.volume() - oldVolume) > 0.009f) {
+                setControlOverlay(packet.volume() > oldVolume ? "🔊" : "🔉");
+            } else {
+                setControlOverlay(packet.currentState() ? "⏸" : "▶");
+            }
 //            long diff = Math.abs(targetTime - currentTime);
 //            if (diff > 2_000_000_000L) {
 //                seekVideoTo(targetTime);
@@ -208,6 +222,19 @@ public class Screen {
 //                setPaused(packet.currentState());
 //            }
         });
+    }
+
+    public boolean hasControlOverlay() {
+        return System.nanoTime() < controlOverlayUntilNanos;
+    }
+
+    public String getControlOverlayText() {
+        return controlOverlayText;
+    }
+
+    public void setControlOverlay(String text) {
+        controlOverlayText = text;
+        controlOverlayUntilNanos = System.nanoTime() + 2_000_000_000L;
     }
 
     public void reloadTexture() {
@@ -497,7 +524,8 @@ public class Screen {
                             isSync,
                             paused,
                             mediaPlayer.getCurrentTime(),
-                            mediaPlayer.getDuration()
+                            mediaPlayer.getDuration(),
+                            mediaPlayer.getVolume()
                     )
             );
         }

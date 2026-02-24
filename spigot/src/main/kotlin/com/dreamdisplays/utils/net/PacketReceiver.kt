@@ -61,7 +61,8 @@ class PacketReceiver(private val plugin: Main) : PluginMessageListener {
                     input.readBoolean(),
                     input.readBoolean(),
                     input.readVarLong(),
-                    input.readVarLong()
+                    input.readVarLong(),
+                    input.readFloat()
                 )
                 processSyncPacket(syncData, player)
             }

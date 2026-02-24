@@ -75,6 +75,7 @@ object PacketUtils {
                 output.writeBoolean(syncData.currentState)
                 output.writeVarLong(syncData.currentTime)
                 output.writeVarLong(syncData.limitTime)
+                output.writeFloat(syncData.volume)
             }
 
             sendPacket(players, CHANNEL_SYNC, packet)

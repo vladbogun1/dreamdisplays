@@ -30,6 +30,7 @@ class StateData(private val id: UUID?) {
     private var lastReportedTime: Long = 0
     private var lastReportedTimestamp: Long = 0
     private var limitTime: Long = 0
+    private var volume: Float = 1.0f
 
     fun getCurrentTime(): Long {
         val nanos = System.nanoTime()
@@ -55,11 +56,18 @@ class StateData(private val id: UUID?) {
         lastReportedTimestamp = System.nanoTime()
     }
 
+
+    fun adjustVolume(step: Float) {
+        val next = (volume + step).coerceIn(0.0f, 2.0f)
+        volume = next
+    }
+
     fun update(packet: SyncData) {
         paused = packet.currentState
         lastReportedTime = packet.currentTime
         lastReportedTimestamp = System.nanoTime()
         limitTime = packet.limitTime
+        volume = packet.volume
     }
 
     fun createPacket(): SyncData {
@@ -67,6 +75,6 @@ class StateData(private val id: UUID?) {
 
         if (limitTime == 0L) displayData.duration?.let { limitTime = it }
 
-        return SyncData(id, true, paused, currentTime, limitTime)
+        return SyncData(id, true, paused, currentTime, limitTime, volume)
     }
 }

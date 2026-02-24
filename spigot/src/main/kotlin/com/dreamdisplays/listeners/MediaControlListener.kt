@@ -1,6 +1,7 @@
 package com.dreamdisplays.listeners
 
 import com.dreamdisplays.managers.DisplayManager.getDisplays
+import com.dreamdisplays.managers.StateManager.adjustVolume
 import com.dreamdisplays.managers.StateManager.seek
 import com.dreamdisplays.managers.StateManager.togglePause
 import org.bukkit.Material
@@ -16,6 +17,7 @@ import org.jspecify.annotations.NullMarked
  *
  * - Lever: play/pause toggle
  * - Button: seek (sneak = backward, normal = forward)
+ * - Note block: volume (sneak = down, normal = up)
  */
 @NullMarked
 class MediaControlListener : Listener {
@@ -34,6 +36,12 @@ class MediaControlListener : Listener {
         if (display.ownerId != player.uniqueId) return
 
         when {
+            type == Material.NOTE_BLOCK -> {
+                val step = if (player.isSneaking) -0.1f else 0.1f
+                adjustVolume(display.id, step, player)
+                event.isCancelled = true
+            }
+
             type == Material.LEVER -> {
                 togglePause(display.id, player)
                 event.isCancelled = true
@@ -48,7 +56,7 @@ class MediaControlListener : Listener {
     }
 
     private fun isControlBlock(type: Material): Boolean =
-        type == Material.LEVER || isButton(type)
+        type == Material.LEVER || type == Material.NOTE_BLOCK || isButton(type)
 
     private fun isButton(type: Material): Boolean = type.name.endsWith("_BUTTON")
 

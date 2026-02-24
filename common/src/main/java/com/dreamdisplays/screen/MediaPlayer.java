@@ -255,6 +255,10 @@ public class MediaPlayer {
         safeExecute(this::applyVolume);
     }
 
+    public float getVolume() {
+        return (float) userVolume;
+    }
+
     public void setBrightness(double brightness) {
         this.brightness = Math.max(0, Math.min(2, brightness));
     }
