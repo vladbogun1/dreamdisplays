@@ -155,7 +155,8 @@ public final class Packets {
             boolean isSync,
             boolean currentState,
             long currentTime,
-            long limitTime
+            long limitTime,
+            float volume
     ) implements CustomPacketPayload {
         public static final Type<Sync> PACKET_ID = createType("sync");
         public static final StreamCodec<FriendlyByteBuf, Sync> PACKET_CODEC =
@@ -166,6 +167,7 @@ public final class Packets {
                             buf.writeBoolean(packet.currentState);
                             buf.writeVarLong(packet.currentTime);
                             buf.writeVarLong(packet.limitTime);
+                            buf.writeFloat(packet.volume);
                         },
                         buf ->
                                 new Sync(
@@ -173,7 +175,8 @@ public final class Packets {
                                         buf.readBoolean(),
                                         buf.readBoolean(),
                                         buf.readVarLong(),
-                                        buf.readVarLong()
+                                        buf.readVarLong(),
+                                        buf.readFloat()
                                 )
                 );
 

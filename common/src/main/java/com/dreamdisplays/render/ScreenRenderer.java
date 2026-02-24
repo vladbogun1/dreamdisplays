@@ -78,7 +78,67 @@ public class ScreenRenderer {
         } else if (screen.renderType != null) {
             renderColor(stack, tessellator, screen.renderType);
         }
+        if (screen.hasControlOverlay() && screen.renderType != null) {
+            renderOverlay(screen, stack, tessellator);
+        }
         stack.popPose();
+    }
+
+    private static void renderOverlay(Screen screen, PoseStack stack, Tesselator tessellator) {
+        Matrix4f pose = stack.last().pose();
+        String marker = screen.getControlOverlayText();
+
+        int r = 255;
+        int g = 255;
+        int b = 255;
+        if ("⏸".equals(marker)) {
+            r = 255;
+            g = 220;
+            b = 64;
+        } else if (marker.startsWith("⏩") || marker.startsWith("⏪")) {
+            r = 64;
+            g = 200;
+            b = 255;
+        } else if (marker.startsWith("🔊") || marker.startsWith("🔉") || marker.startsWith("🔈")) {
+            r = 120;
+            g = 255;
+            b = 140;
+        }
+
+        BufferBuilder builder = tessellator.begin(
+                VertexFormat.Mode.QUADS,
+                DefaultVertexFormat.BLOCK
+        );
+
+        builder
+                .addVertex(pose, 0.35f, 0.35f, 0.001f)
+                .setColor(r, g, b, 140)
+                .setUv(0f, 1f)
+                .setLight(0xF000F0)
+                .setNormal(0f, 0f, 1f);
+        builder
+                .addVertex(pose, 0.65f, 0.35f, 0.001f)
+                .setColor(r, g, b, 140)
+                .setUv(1f, 1f)
+                .setLight(0xF000F0)
+                .setNormal(0f, 0f, 1f);
+        builder
+                .addVertex(pose, 0.65f, 0.65f, 0.001f)
+                .setColor(r, g, b, 140)
+                .setUv(1f, 0f)
+                .setLight(0xF000F0)
+                .setNormal(0f, 0f, 1f);
+        builder
+                .addVertex(pose, 0.35f, 0.65f, 0.001f)
+                .setColor(r, g, b, 140)
+                .setUv(0f, 0f)
+                .setLight(0xF000F0)
+                .setNormal(0f, 0f, 1f);
+
+        MeshData built = builder.buildOrThrow();
+        if (screen.renderType != null) {
+            screen.renderType.draw(built);
+        }
     }
 
     // Prevent rotation issues
