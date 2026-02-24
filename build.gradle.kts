@@ -2,13 +2,6 @@ plugins {
     java
 }
 
-// The root project does not ship a runtime artifact.
-// Disable its default jar to avoid producing a misleading empty
-// `displays-<version>.jar` that can be mistaken for the Spigot plugin.
-tasks.jar {
-    enabled = false
-}
-
 subprojects {
     apply(plugin = "java")
     java {
