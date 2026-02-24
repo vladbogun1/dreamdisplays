@@ -31,6 +31,30 @@ class StateData(private val id: UUID?) {
     private var lastReportedTimestamp: Long = 0
     private var limitTime: Long = 0
 
+    fun getCurrentTime(): Long {
+        val nanos = System.nanoTime()
+        val currentTime = if (paused) {
+            lastReportedTime
+        } else {
+            lastReportedTime + (nanos - lastReportedTimestamp)
+        }
+        return if (limitTime > 0) currentTime % limitTime else currentTime
+    }
+
+    fun setPaused(value: Boolean) {
+        lastReportedTime = getCurrentTime()
+        lastReportedTimestamp = System.nanoTime()
+        paused = value
+    }
+
+    fun seekRelative(seconds: Long) {
+        val now = getCurrentTime()
+        val shifted = now + (seconds * 1_000_000_000L)
+        val clamped = shifted.coerceAtLeast(0)
+        lastReportedTime = if (limitTime > 0) clamped % limitTime else clamped
+        lastReportedTimestamp = System.nanoTime()
+    }
+
     fun update(packet: SyncData) {
         paused = packet.currentState
         lastReportedTime = packet.currentTime
@@ -39,16 +63,10 @@ class StateData(private val id: UUID?) {
     }
 
     fun createPacket(): SyncData {
-        val nanos = System.nanoTime()
-        val currentTime = if (paused) {
-            lastReportedTime
-        } else {
-            lastReportedTime + (nanos - lastReportedTimestamp)
-        }
+        val currentTime = getCurrentTime()
 
         if (limitTime == 0L) displayData.duration?.let { limitTime = it }
 
-        val time = if (limitTime > 0) currentTime % limitTime else currentTime
-        return SyncData(id, true, paused, time, limitTime)
+        return SyncData(id, true, paused, currentTime, limitTime)
     }
 }

@@ -3,6 +3,7 @@ package com.dreamdisplays.registrar
 import com.dreamdisplays.Main
 import com.dreamdisplays.listeners.PlayerListener
 import com.dreamdisplays.listeners.ProtectionListener
+import com.dreamdisplays.listeners.MediaControlListener
 import com.dreamdisplays.listeners.SelectionListener
 import org.bukkit.Bukkit
 
@@ -14,6 +15,7 @@ object ListenerRegistrar {
         val pm = Bukkit.getPluginManager()
         pm.registerEvents(SelectionListener(plugin), plugin)
         pm.registerEvents(ProtectionListener(), plugin)
+        pm.registerEvents(MediaControlListener(), plugin)
         pm.registerEvents(PlayerListener(), plugin)
     }
 }

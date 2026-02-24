@@ -571,6 +571,24 @@ public class MediaPlayer {
 
         // Get current audio position FIRST (audio is the master clock)
         long audioPos = audioPipeline.queryPosition(Format.TIME);
+        long duration = audioPipeline.queryDuration(Format.TIME);
+
+        // If we're at (or very close to) the end, restart from the beginning.
+        if (duration > 0 && audioPos >= Math.max(0, duration - 50_000_000L)) {
+            audioPos = 0;
+            audioPipeline.seekSimple(
+                    Format.TIME,
+                    EnumSet.of(SeekFlags.FLUSH, SeekFlags.ACCURATE),
+                    0L
+            );
+            if (videoPipeline != null) {
+                videoPipeline.seekSimple(
+                        Format.TIME,
+                        EnumSet.of(SeekFlags.FLUSH, SeekFlags.ACCURATE),
+                        0L
+                );
+            }
+        }
 
         audioPipeline.pause();
         if (videoPipeline != null) {
@@ -640,6 +658,12 @@ public class MediaPlayer {
 
     private void doSeekFast(long nanos) {
         if (!initialized) return;
+        long duration = audioPipeline.queryDuration(Format.TIME);
+        if (duration > 0) {
+            nanos = Math.max(0, Math.min(nanos, duration - 1));
+        } else {
+            nanos = Math.max(0, nanos);
+        }
         EnumSet<SeekFlags> flags = EnumSet.of(
                 SeekFlags.FLUSH,
                 SeekFlags.KEY_UNIT

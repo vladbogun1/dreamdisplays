@@ -16,6 +16,15 @@ import java.util.*
 object StateManager {
     private val playStates: MutableMap<UUID?, StateData> = HashMap()
 
+    private fun getOrCreateState(id: UUID?): StateData? {
+        val data = getDisplayData(id) ?: return null
+        return playStates.computeIfAbsent(id) { StateData(id).also { state ->
+            data.duration?.let {
+                state.update(SyncData(id, data.isSync, false, 0L, it))
+            }
+        } }
+    }
+
     @JvmStatic
     fun processSyncPacket(packet: SyncData, player: Player) {
         val data = getDisplayData(packet.id)
@@ -43,9 +52,37 @@ object StateManager {
 
     @JvmStatic
     fun sendSyncPacket(id: UUID?, player: Player?) {
-        val state = playStates[id] ?: return
+        val data = getDisplayData(id) ?: return
+        if (!data.isSync) return
 
-        val packet = state.createPacket()
+        val state = getOrCreateState(id)
+        val packet = state?.createPacket() ?: SyncData(id, true, false, 0L, data.duration ?: 0L)
+
         PacketUtils.sendSync(mutableListOf(player), packet)
+    }
+
+    @JvmStatic
+    fun togglePause(id: UUID?, actor: Player) {
+        val data = getDisplayData(id) ?: return
+        if (data.ownerId != actor.uniqueId) return
+
+        data.isSync = true
+        val state = getOrCreateState(id) ?: return
+        val packetBefore = state.createPacket()
+        state.setPaused(!packetBefore.currentState)
+        val packet = state.createPacket()
+        PacketUtils.sendSync(getReceivers(data).toMutableList(), packet)
+    }
+
+    @JvmStatic
+    fun seek(id: UUID?, seconds: Long, actor: Player) {
+        val data = getDisplayData(id) ?: return
+        if (data.ownerId != actor.uniqueId) return
+
+        data.isSync = true
+        val state = getOrCreateState(id) ?: return
+        state.seekRelative(seconds)
+        val packet = state.createPacket()
+        PacketUtils.sendSync(getReceivers(data).toMutableList(), packet)
     }
 }
