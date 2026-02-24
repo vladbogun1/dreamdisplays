@@ -2,9 +2,11 @@ name: Dream Displays
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - '**'
   pull_request:
-    branches: [ main ]
+    branches:
+      - '**'
   workflow_dispatch:
 
 concurrency:
@@ -67,7 +69,7 @@ jobs:
     name: Publish
     runs-on: ubuntu-24.04
     needs: build
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     permissions:
       contents: write
 
